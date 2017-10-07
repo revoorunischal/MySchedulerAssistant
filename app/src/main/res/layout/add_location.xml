@@ -72,5 +72,5 @@
         android:text="Add Schedule"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/button2" />
+        android:id="@+id/add_schedule" />
 </LinearLayout>

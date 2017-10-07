@@ -1,8 +1,11 @@
 package com.myschedulerassistant;
 
+import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -19,6 +22,10 @@ import com.google.android.gms.common.GooglePlayServicesRepairableException;
 import com.google.android.gms.location.places.Place;
 import com.google.android.gms.location.places.ui.PlacePicker;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.Calendar;
 import java.util.regex.Pattern;
 
@@ -33,9 +40,12 @@ public class AddLocation extends AppCompatActivity {
     private EditText placeSelected;
     private EditText purpose;
     private Button selectDate;
+    private Button addSchedule;
+    SharedPreferences sharedpreferences;
     private LinearLayout addScheduleLayout ;
     private static final int PLACE_PICKER_REQUEST = 1;
     Place selectedPlace;
+
     //to setup the map object
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,20 +55,27 @@ public class AddLocation extends AppCompatActivity {
         dateTime =(EditText) findViewById(R.id.dateTime);
         selectDate =(Button) findViewById(R.id.selectDate);
         selectDate.setOnClickListener(onClickListener);
+        addSchedule = (Button) findViewById(R.id.add_schedule);
+        addSchedule.setOnClickListener(onClickListener);
         placeSelected =(EditText) findViewById(R.id.selected_place);
         purpose =(EditText) findViewById(R.id.purpose);
         addScheduleLayout =(LinearLayout) findViewById(R.id.addscheduleScreen);
         addScheduleLayout.setVisibility(View.INVISIBLE);
+
         PlacePicker.IntentBuilder builder = new PlacePicker.IntentBuilder();
         try {
             startActivityForResult(builder.build(this), PLACE_PICKER_REQUEST);
-        } catch (GooglePlayServicesRepairableException e) {
-            e.printStackTrace();
-        } catch (GooglePlayServicesNotAvailableException e) {
+        } catch (GooglePlayServicesRepairableException | GooglePlayServicesNotAvailableException e) {
             e.printStackTrace();
         }
     }
 
+    @Override
+    public void onResume() {
+        sharedpreferences = getSharedPreferences(MainActivity.MyPREFERENCES,
+                Context.MODE_PRIVATE);
+        super.onResume();
+    }
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == PLACE_PICKER_REQUEST) {
             if (resultCode == RESULT_OK) {
@@ -125,7 +142,37 @@ public class AddLocation extends AppCompatActivity {
                                             }
                                         }, mYear, mMonth, mDay);
                                 datePickerDialog.show();
-
+                                break;
+                            case R.id.add_schedule:
+                                //TODO to be modified by messi adding in shared preferences  as of now modify it to db
+                                try {
+                                    JSONObject json = new JSONObject();
+                                    json.put(MainActivity.PLACE, selectedPlace);
+                                    json.put(MainActivity.PLACE_NAME, selectedPlace.getName());
+                                    json.put(MainActivity.PLACE_ADDRESS, selectedPlace.getAddress());
+                                    json.put(MainActivity.PLACE_LATITUDE, selectedPlace.getLatLng().latitude);
+                                    json.put(MainActivity.PLACE_LONGITUDE, selectedPlace.getLatLng().longitude);
+                                    json.put(MainActivity.PURPOSE, purpose.getText().toString());
+                                    json.put(MainActivity.DATE_AND_TIME, dateTime.getText().toString());
+                                    SharedPreferences.Editor editor = sharedpreferences.edit();
+                                    sharedpreferences = getSharedPreferences(MainActivity.MyPREFERENCES,
+                                            Context.MODE_PRIVATE);
+                                    String jsonArrStr = sharedpreferences.getString(MainActivity.SCHEDULER_ARRAY, null);
+                                    if (jsonArrStr != null) {
+                                        JSONArray jsonArray = new JSONArray(jsonArrStr);
+                                        jsonArray.put(json);
+                                        editor.putString(MainActivity.SCHEDULER_ARRAY, jsonArray.toString());
+                                    } else {
+                                        JSONArray jsonArray = new JSONArray();
+                                        jsonArray.put(json);
+                                        editor.putString(MainActivity.SCHEDULER_ARRAY, jsonArray.toString());
+                                    }
+                                    editor.commit();
+                                    Toast.makeText(getApplicationContext(), "Schedule Added", Toast.LENGTH_LONG).show();
+                                    finish();
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
+                                }
                                 break;
                         }
                     }

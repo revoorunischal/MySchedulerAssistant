@@ -2,6 +2,7 @@ package com.myschedulerassistant;
 
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -16,6 +17,17 @@ public class MainActivity extends AppCompatActivity {
     Button  add_Schedule;
     Button  view_Schedule;
     public static Boolean mLocationPermissionGranted;
+    public static final String MyPREFERENCES = "MyPrefs";
+    public static final String SCHEDULER_ARRAY = "array";
+
+    //JSON Object strings
+    public static final String PLACE = "place";
+    public static final String PLACE_NAME = "place_name";
+    public static final String PLACE_ADDRESS = "place_address";
+    public static final String PLACE_LATITUDE = "place_lat";
+    public static final String PLACE_LONGITUDE = "place_lon";
+    public static final String PURPOSE = "purpose";
+    public static final String DATE_AND_TIME = "dat";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,11 +46,12 @@ public class MainActivity extends AppCompatActivity {
             if(mLocationPermissionGranted) {
                 switch (v.getId()) {
                     case R.id.addLocation:
-                        Intent intent = new Intent(MainActivity.this, AddLocation.class);
-                        startActivity(intent);
+                        Intent addLocationIntent = new Intent(MainActivity.this, AddLocation.class);
+                        startActivity(addLocationIntent);
                         break;
                     case R.id.viewSchedule:
-                        //DO something
+                        Intent viewScheduleIntent = new Intent(MainActivity.this, ScheduledLocations.class);
+                        startActivity(viewScheduleIntent);
                         break;
                 }
             }else {
@@ -78,7 +91,6 @@ public class MainActivity extends AppCompatActivity {
                     Toast toast = Toast.makeText(getApplicationContext(), "No permission given to access location", Toast.LENGTH_LONG);
                     toast.show();
                 }
-                return;
             }
         }
     }
