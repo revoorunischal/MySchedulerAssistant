@@ -127,7 +127,6 @@ public class AddLocation extends AppCompatActivity {
                                 datePickerDialog.show();
 
                                 break;
-                            case R.id.A
                         }
                     }
 
