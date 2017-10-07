@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="20px"
+    android:layout_gravity="center"
+    android:id="@+id/addscheduleScreen"
+    android:visibility="invisible"
+    >
+    <TextView
+        android:text="Add the following selected place  to your scheduler along with time and purpose"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/textView4"
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="30dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:textAlignment="center"
+        android:padding="30px"/>
+    <!--  Name Label -->
+    <TextView
+        android:text="Selected place"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/textView7" />
+    <EditText android:id="@+id/selected_place"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="text"
+        android:enabled="false"
+        android:layout_marginBottom="10dp"/>
+    <TextView
+        android:text="Purpose"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/textView8" />
+    <EditText android:id="@+id/purpose"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="text" />
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:weightSum="2">
+        <TextView
+            android:text="Choose a date and time"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:id="@+id/textView9"
+            android:textAlignment="center" />
+        <Button
+            android:text="Calendar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/selectDate"
+            android:layout_marginLeft="25dp"
+            />
+    </LinearLayout>
+    <EditText android:id="@+id/dateTime"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:enabled="false"
+        android:layout_marginBottom="30dp"
+        />
+    <Button
+        android:text="Add Schedule"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/button2" />
+</LinearLayout>
