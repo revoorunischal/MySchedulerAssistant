@@ -1,6 +1,5 @@
 package com.myschedulerassistant;
 
-import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.content.Context;
@@ -14,6 +13,7 @@ import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
@@ -36,58 +36,17 @@ import java.util.regex.Pattern;
 
 public class AddLocation extends AppCompatActivity {
 
+    private static final int PLACE_PICKER_REQUEST = 1;
+    SharedPreferences sharedpreferences;
+    Place selectedPlace;
+    ProgressBar progressBar;
     private EditText dateTime;
     private EditText placeSelected;
     private EditText purpose;
     private Button selectDate;
     private Button addSchedule;
-    SharedPreferences sharedpreferences;
-    private LinearLayout addScheduleLayout ;
-    private static final int PLACE_PICKER_REQUEST = 1;
-    Place selectedPlace;
-
-    //to setup the map object
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        // Retrieve the content view that renders the map.
-        setContentView(R.layout.add_location);
-        dateTime =(EditText) findViewById(R.id.dateTime);
-        selectDate =(Button) findViewById(R.id.selectDate);
-        selectDate.setOnClickListener(onClickListener);
-        addSchedule = (Button) findViewById(R.id.add_schedule);
-        addSchedule.setOnClickListener(onClickListener);
-        placeSelected =(EditText) findViewById(R.id.selected_place);
-        purpose =(EditText) findViewById(R.id.purpose);
-        addScheduleLayout =(LinearLayout) findViewById(R.id.addscheduleScreen);
-        addScheduleLayout.setVisibility(View.INVISIBLE);
-
-        PlacePicker.IntentBuilder builder = new PlacePicker.IntentBuilder();
-        try {
-            startActivityForResult(builder.build(this), PLACE_PICKER_REQUEST);
-        } catch (GooglePlayServicesRepairableException | GooglePlayServicesNotAvailableException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    public void onResume() {
-        sharedpreferences = getSharedPreferences(MainActivity.MyPREFERENCES,
-                Context.MODE_PRIVATE);
-        super.onResume();
-    }
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == PLACE_PICKER_REQUEST) {
-            if (resultCode == RESULT_OK) {
-                Place place = PlacePicker.getPlace(this.getApplicationContext(), data);
-                selectedPlace = place;
-                String toastMsg = String.format("Place selected : %s", place.getName());
-                Toast.makeText(this, toastMsg, Toast.LENGTH_LONG).show();
-                placeSelected.setText(place.getName());
-                addScheduleLayout.setVisibility(View.VISIBLE);
-            }
-        }
-    }
+    private LinearLayout addScheduleLayout;
+    private LinearLayout addScheduleLoaderLayout;
             private View.OnClickListener onClickListener = new View.OnClickListener() {
                 @Override
                 public void onClick(final View v) {
@@ -178,4 +137,52 @@ public class AddLocation extends AppCompatActivity {
                     }
 
             };
+
+    //to setup the map object
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        // Retrieve the content view that renders the map.
+        setContentView(R.layout.add_location);
+        dateTime = (EditText) findViewById(R.id.dateTime);
+        selectDate = (Button) findViewById(R.id.selectDate);
+        selectDate.setOnClickListener(onClickListener);
+        addSchedule = (Button) findViewById(R.id.add_schedule);
+        addSchedule.setOnClickListener(onClickListener);
+        placeSelected = (EditText) findViewById(R.id.selected_place);
+        purpose = (EditText) findViewById(R.id.purpose);
+        addScheduleLayout = (LinearLayout) findViewById(R.id.addscheduleScreen);
+        addScheduleLoaderLayout = (LinearLayout) findViewById(R.id.addscheduleLoadScreen);
+        progressBar = (ProgressBar) findViewById(R.id.addProgress);
+        addScheduleLayout.setVisibility(View.INVISIBLE);
+        addScheduleLoaderLayout.setVisibility(View.VISIBLE);
+        PlacePicker.IntentBuilder builder = new PlacePicker.IntentBuilder();
+        try {
+            startActivityForResult(builder.build(this), PLACE_PICKER_REQUEST);
+        } catch (GooglePlayServicesRepairableException | GooglePlayServicesNotAvailableException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void onResume() {
+        sharedpreferences = getSharedPreferences(MainActivity.MyPREFERENCES,
+                Context.MODE_PRIVATE);
+        super.onResume();
+    }
+
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == PLACE_PICKER_REQUEST) {
+            if (resultCode == RESULT_OK) {
+                Place place = PlacePicker.getPlace(this.getApplicationContext(), data);
+                selectedPlace = place;
+                String toastMsg = String.format("Place selected : %s", place.getName());
+                Toast.makeText(this, toastMsg, Toast.LENGTH_LONG).show();
+                placeSelected.setText(place.getName());
+                addScheduleLoaderLayout.setVisibility(View.INVISIBLE);
+                addScheduleLayout.setVisibility(View.VISIBLE);
+
+            }
+        }
+    }
 }

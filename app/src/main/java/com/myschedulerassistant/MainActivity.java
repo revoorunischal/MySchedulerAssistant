@@ -1,25 +1,19 @@
 package com.myschedulerassistant;
 
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.os.Bundle;
+import android.os.StrictMode;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
-    private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 10;
-    Button  add_Schedule;
-    Button  view_Schedule;
-    public static Boolean mLocationPermissionGranted;
     public static final String MyPREFERENCES = "MyPrefs";
     public static final String SCHEDULER_ARRAY = "array";
-
     //JSON Object strings
     public static final String PLACE = "place";
     public static final String PLACE_NAME = "place_name";
@@ -28,18 +22,10 @@ public class MainActivity extends AppCompatActivity {
     public static final String PLACE_LONGITUDE = "place_lon";
     public static final String PURPOSE = "purpose";
     public static final String DATE_AND_TIME = "dat";
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        getLocationPermission();
-        add_Schedule = (Button)findViewById(R.id.addLocation);
-        view_Schedule = (Button)findViewById(R.id.viewSchedule);
-        add_Schedule.setOnClickListener(onClickListener);
-        view_Schedule.setOnClickListener(onClickListener);
-    }
-
+    private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 10;
+    public static Boolean mLocationPermissionGranted;
+    Button add_Schedule;
+    Button view_Schedule;
     private View.OnClickListener onClickListener = new View.OnClickListener() {
         @Override
         public void onClick(final View v) {
@@ -60,6 +46,25 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     };
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        getLocationPermission();
+        add_Schedule = (Button) findViewById(R.id.addLocation);
+        view_Schedule = (Button) findViewById(R.id.viewSchedule);
+        add_Schedule.setOnClickListener(onClickListener);
+        view_Schedule.setOnClickListener(onClickListener);
+        int SDK_INT = android.os.Build.VERSION.SDK_INT;
+        if (SDK_INT > 8) {
+            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
+                    .permitAll().build();
+            StrictMode.setThreadPolicy(policy);
+            //your codes here
+
+        }
+    }
 
     private void getLocationPermission() {
     /*

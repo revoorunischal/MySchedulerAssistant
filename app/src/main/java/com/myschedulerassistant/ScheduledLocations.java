@@ -1,6 +1,7 @@
 package com.myschedulerassistant;
 
 import android.Manifest;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -11,6 +12,9 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -31,8 +35,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.Iterator;
-
 /**
  * Created by nischal on 10/7/2017.
  */
@@ -40,20 +42,63 @@ import java.util.Iterator;
 public class ScheduledLocations extends AppCompatActivity
         implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
 
+    SharedPreferences sharedpreferences;
+    Button fetchfastestRoute;
+    Boolean pageLoaded = false;
+    JSONArray displayedLocs;
     private GoogleMap mMap;
     private GoogleApiClient mGoogleApiClient;
     private LocationRequest mLocationRequest;
     private Location mLastLocation;
     private Marker mCurrLocationMarker;
+    ;
     private Marker[] scheduled_locations;
-    SharedPreferences sharedpreferences;
-
+    private View.OnClickListener onClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(final View v) {
+            switch (v.getId()) {
+                case R.id.fetchFastestRoute:
+                    if (!pageLoaded || mCurrLocationMarker == null) {
+                        Log.i(ScheduledLocations.class.getName(), "Page no loaded yet");
+                    } else {
+                        pageLoaded = false;
+                        ProgressDialog progressDialog;
+                        progressDialog = new ProgressDialog(ScheduledLocations.this);
+                        progressDialog.setMessage("Fetching");
+                        progressDialog.show();
+                        Double[] distances = new Double[displayedLocs.length()];
+                        try {
+                            for (int i = 0; i < displayedLocs.length(); i++) {
+                                JSONObject json_fetched = displayedLocs.getJSONObject(i);
+                                Double distance = CommonFunctions.getDistance((Double) json_fetched.get(MainActivity.PLACE_LATITUDE),
+                                        (Double) json_fetched.get(MainActivity.PLACE_LONGITUDE), mCurrLocationMarker.getPosition().latitude,
+                                        mCurrLocationMarker.getPosition().longitude);
+                                Toast.makeText(getApplicationContext(), "distance to " + json_fetched.getString(MainActivity.PLACE_NAME) + " is " + distance
+                                        , Toast.LENGTH_SHORT).show();
+                                distances[i] = distance;
+                            }
+                            Toast.makeText(getApplicationContext(), "distances are  " + distances.toString()
+                                    , Toast.LENGTH_SHORT).show();
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                        progressDialog.hide();
+                        pageLoaded = true;
+                    }
+                    break;
+            }
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         // Retrieve the content view that renders the map.
         setContentView(R.layout.scheduled_locations);
+        fetchfastestRoute = (Button) findViewById(R.id.fetchFastestRoute);
+        fetchfastestRoute.setOnClickListener(onClickListener);
+
+        displayedLocs = new JSONArray();
         // Build the map.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -118,10 +163,12 @@ public class ScheduledLocations extends AppCompatActivity
                             (Double) json_fetched.get(MainActivity.PLACE_LONGITUDE));
                     MarkerOptions markerOptions = new MarkerOptions();
                     markerOptions.position(latLng);
-                    markerOptions.title(json_fetched.getString(MainActivity.PURPOSE) + " on " + json_fetched.getString(MainActivity.PURPOSE));
+                    markerOptions.title(json_fetched.getString(MainActivity.PURPOSE) + " on " + json_fetched.getString(MainActivity.DATE_AND_TIME));
                     markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW));
                     scheduled_locations[i] = mMap.addMarker(markerOptions);
+                    displayedLocs.put(json_fetched);  //TODO all the later caluclations are donw only on these
                 }
+                pageLoaded = true;
             } else {
                 Toast.makeText(getApplicationContext(), "No schedules added. Please Add a schedule " +
                         "and come here to check the aggregated view", Toast.LENGTH_LONG).show();
@@ -164,5 +211,4 @@ public class ScheduledLocations extends AppCompatActivity
             LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
         }
     }
-
 }
