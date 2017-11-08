@@ -30,6 +30,7 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -51,7 +52,6 @@ public class ScheduledLocations extends AppCompatActivity
     private LocationRequest mLocationRequest;
     private Location mLastLocation;
     private Marker mCurrLocationMarker;
-    ;
     private Marker[] scheduled_locations;
     private View.OnClickListener onClickListener = new View.OnClickListener() {
         @Override
@@ -70,15 +70,16 @@ public class ScheduledLocations extends AppCompatActivity
                         try {
                             for (int i = 0; i < displayedLocs.length(); i++) {
                                 JSONObject json_fetched = displayedLocs.getJSONObject(i);
-                                Double distance = CommonFunctions.getDistance((Double) json_fetched.get(MainActivity.PLACE_LATITUDE),
-                                        (Double) json_fetched.get(MainActivity.PLACE_LONGITUDE), mCurrLocationMarker.getPosition().latitude,
-                                        mCurrLocationMarker.getPosition().longitude);
+                                Double distance = null;
+                                while (distance == null) {
+                                    distance = CommonFunctions.getDistance((Double) json_fetched.get(MainActivity.PLACE_LATITUDE),
+                                            (Double) json_fetched.get(MainActivity.PLACE_LONGITUDE), mCurrLocationMarker.getPosition().latitude,
+                                            mCurrLocationMarker.getPosition().longitude, mMap);
+                                }
                                 Toast.makeText(getApplicationContext(), "distance to " + json_fetched.getString(MainActivity.PLACE_NAME) + " is " + distance
                                         , Toast.LENGTH_SHORT).show();
                                 distances[i] = distance;
                             }
-                            Toast.makeText(getApplicationContext(), "distances are  " + distances.toString()
-                                    , Toast.LENGTH_SHORT).show();
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
@@ -116,7 +117,7 @@ public class ScheduledLocations extends AppCompatActivity
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
-        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (ContextCompat.checkSelfPermission(this,
                     Manifest.permission.ACCESS_FINE_LOCATION)
                     == PackageManager.PERMISSION_GRANTED) {
@@ -127,6 +128,12 @@ public class ScheduledLocations extends AppCompatActivity
             buildGoogleApiClient();
             mMap.setMyLocationEnabled(true);
         }
+        mMap.setOnPolylineClickListener(new GoogleMap.OnPolylineClickListener() {
+            @Override
+            public void onPolylineClick(Polyline polyline) {
+                Toast.makeText(getApplicationContext(), polyline.getTag().toString(), Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     protected synchronized void buildGoogleApiClient() {
@@ -211,4 +218,6 @@ public class ScheduledLocations extends AppCompatActivity
             LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
         }
     }
+
+
 }

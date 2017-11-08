@@ -1,18 +1,22 @@
 package com.myschedulerassistant;
 
+import android.graphics.Color;
 import android.util.Log;
 
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
+
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.ProtocolException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by nischal on 10/14/2017.
@@ -20,8 +24,9 @@ import java.net.URL;
 
 public class CommonFunctions {
 
-    public static Double getDistance(final double lat1, final double lon1, final double lat2, final double lon2) {
+    public static Double getDistance(final double lat1, final double lon1, final double lat2, final double lon2, GoogleMap mMap) {
         Double parsedDistance = null;
+        Double durationInMins = null;
         String response = "";
 
         try {
@@ -47,18 +52,63 @@ public class CommonFunctions {
             Log.i(CommonFunctions.class.getName(), "parsed distance in metres " + parsedDistance);
             parsedDistance = parsedDistance / 1000;
             Log.i(CommonFunctions.class.getName(), "parsed distance in km " + parsedDistance);
-        } catch (ProtocolException e) {
-            e.printStackTrace();
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (JSONException e) {
-            e.printStackTrace();
+            JSONObject duration = steps.getJSONObject("duration");
+            durationInMins = Double.parseDouble(duration.getString("value")) / 60;
+            Log.i(CommonFunctions.class.getName(), "parsed duration in mins " + durationInMins);
+
+            if (parsedDistance != null) {
+                JSONObject overviewPolyline = routes.getJSONObject("overview_polyline");
+                String polyline = overviewPolyline.getString("points");
+
+                List<LatLng> list = decodePoly(polyline);
+
+                Polyline line = mMap.addPolyline(new PolylineOptions()
+                        .addAll(list)
+                        .width(10)
+                        .color(Color.BLUE)
+                        .geodesic(false)
+                        .clickable(true)
+                );
+                line.setPoints(list);
+                line.setTag("Distance " + parsedDistance + " kms and time to travel is " + durationInMins.intValue() + " mins");
+            }
         } catch (Exception e) {
             e.printStackTrace();
-
         }
         return parsedDistance;
     }
+
+    public static List<LatLng> decodePoly(String encoded) {
+        List<LatLng> poly = new ArrayList<LatLng>();
+        int index = 0, len = encoded.length();
+        int lat = 0, lng = 0;
+
+        while (index < len) {
+            int b, shift = 0, result = 0;
+            do {
+                b = encoded.charAt(index++) - 63;
+                result |= (b & 0x1f) << shift;
+                shift += 5;
+            } while (b >= 0x20);
+            int dlat = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
+            lat += dlat;
+
+            shift = 0;
+            result = 0;
+            do {
+                b = encoded.charAt(index++) - 63;
+                result |= (b & 0x1f) << shift;
+                shift += 5;
+            } while (b >= 0x20);
+            int dlng = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
+            lng += dlng;
+
+            LatLng p = new LatLng((((double) lat / 1E5)),
+                    (((double) lng / 1E5)));
+            poly.add(p);
+        }
+
+        return poly;
+    }
+
 }
