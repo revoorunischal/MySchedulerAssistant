@@ -7,13 +7,14 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
@@ -27,26 +28,27 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.Calendar;
+import java.util.Date;
 import java.util.regex.Pattern;
 
 
-/**
- * Created by nischal on 9/30/2017.
- */
 
 public class AddLocation extends AppCompatActivity {
-
     private static final int PLACE_PICKER_REQUEST = 1;
     SharedPreferences sharedpreferences;
     Place selectedPlace;
-    ProgressBar progressBar;
     private EditText dateTime;
     private EditText placeSelected;
     private EditText purpose;
     private Button selectDate;
-    private Button addSchedule;
+    private Button selectPlace;
+    private Button addTask;
     private LinearLayout addScheduleLayout;
-    private LinearLayout addScheduleLoaderLayout;
+    //Add the task details as objects
+    private Task currentTask;
+    private Date selectedDate;
+    private String taskName, taskPlace;
+    private Double latitude, longitude;
             private View.OnClickListener onClickListener = new View.OnClickListener() {
                 @Override
                 public void onClick(final View v) {
@@ -95,15 +97,24 @@ public class AddLocation extends AppCompatActivity {
 
                                                                 dateTime.setText(dayOfMonth+"-"+(monthOfYear+1)+"-"+year+" "
                                                                 +hourOfDay+":"+minute);
+                                                                selectedDate = new Date(year - 1900, monthOfYear, dayOfMonth, hourOfDay, minute);
                                                             }
                                                         }, mHour, mMinute, false);
                                                 timePickerDialog.show();
                                             }
                                         }, mYear, mMonth, mDay);
                                 datePickerDialog.show();
+
                                 break;
-                            case R.id.add_schedule:
-                                //TODO to be modified by messi adding in shared preferences  as of now modify it to db
+                            case R.id.AddSchedule:
+                                /*currentTask= new Task();
+                                currentTask.setTaskName(taskName);
+                                currentTask.setDateTime(selectedDate);
+                                currentTask.setTaskPlace(taskPlace);
+                                ScheduleList.get(getApplication()).addTask(currentTask);*/
+                                DBHelper dbHelper = DBHelper.getInstance(AddLocation.this);
+                                dbHelper.open();
+                                currentTask = dbHelper.createTask(taskName, selectedDate, taskPlace, latitude, longitude);
                                 try {
                                     JSONObject json = new JSONObject();
                                     json.put(MainActivity.PLACE, selectedPlace);
@@ -147,20 +158,62 @@ public class AddLocation extends AppCompatActivity {
         dateTime = (EditText) findViewById(R.id.dateTime);
         selectDate = (Button) findViewById(R.id.selectDate);
         selectDate.setOnClickListener(onClickListener);
-        addSchedule = (Button) findViewById(R.id.add_schedule);
-        addSchedule.setOnClickListener(onClickListener);
         placeSelected = (EditText) findViewById(R.id.selected_place);
+        selectPlace = (Button) findViewById(R.id.selectPlace);
         purpose = (EditText) findViewById(R.id.purpose);
+        purpose.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(
+                    CharSequence s, int start, int count, int after) {
+// This space intentionally left blank
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int
+                    before, int count) {
+                //currentTask.setTaskName(s.toString());
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+// This one too
+                taskName = s.toString();
+            }
+        });
+        addTask = (Button) findViewById(R.id.AddSchedule);
+        addTask.setOnClickListener(onClickListener);
         addScheduleLayout = (LinearLayout) findViewById(R.id.addscheduleScreen);
-        addScheduleLoaderLayout = (LinearLayout) findViewById(R.id.addscheduleLoadScreen);
-        progressBar = (ProgressBar) findViewById(R.id.addProgress);
-        addScheduleLayout.setVisibility(View.INVISIBLE);
-        addScheduleLoaderLayout.setVisibility(View.VISIBLE);
-        PlacePicker.IntentBuilder builder = new PlacePicker.IntentBuilder();
-        try {
-            startActivityForResult(builder.build(this), PLACE_PICKER_REQUEST);
-        } catch (GooglePlayServicesRepairableException | GooglePlayServicesNotAvailableException e) {
-            e.printStackTrace();
+        addScheduleLayout.setVisibility(View.VISIBLE);
+        selectPlace.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                PlacePicker.IntentBuilder builder = new PlacePicker.IntentBuilder();
+                try {
+                    startActivityForResult(builder.build(AddLocation.this), PLACE_PICKER_REQUEST);
+                } catch (GooglePlayServicesRepairableException e) {
+                    e.printStackTrace();
+                } catch (GooglePlayServicesNotAvailableException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == PLACE_PICKER_REQUEST) {
+            if (resultCode == RESULT_OK) {
+                Place place = PlacePicker.getPlace(this.getApplicationContext(), data);
+                selectedPlace = place;
+                //String toastMsg = String.format("Place selected : %s", place.getName());
+                //Toast.makeText(this, toastMsg, Toast.LENGTH_LONG).show();
+                placeSelected.setText(place.getName());
+                taskPlace = place.getName().toString();
+                latitude = place.getLatLng().latitude;
+                longitude = place.getLatLng().longitude;
+                addScheduleLayout.setVisibility(View.VISIBLE);
+
+            }
         }
     }
 
@@ -171,18 +224,4 @@ public class AddLocation extends AppCompatActivity {
         super.onResume();
     }
 
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == PLACE_PICKER_REQUEST) {
-            if (resultCode == RESULT_OK) {
-                Place place = PlacePicker.getPlace(this.getApplicationContext(), data);
-                selectedPlace = place;
-                String toastMsg = String.format("Place selected : %s", place.getName());
-                Toast.makeText(this, toastMsg, Toast.LENGTH_LONG).show();
-                placeSelected.setText(place.getName());
-                addScheduleLoaderLayout.setVisibility(View.INVISIBLE);
-                addScheduleLayout.setVisibility(View.VISIBLE);
-
-            }
-        }
-    }
 }

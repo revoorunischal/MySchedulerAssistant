@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">My Scheduler Assistant</string>
+    <string name="welcome_message">Welcome to your Most interactive and helpful scheduler.</string>
+    <string name="new_task">New Task</string>
 </resources>

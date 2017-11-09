@@ -12,6 +12,7 @@ import android.widget.Button;
 import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
+
     public static final String MyPREFERENCES = "MyPrefs";
     public static final String SCHEDULER_ARRAY = "array";
     //JSON Object strings
@@ -26,6 +27,7 @@ public class MainActivity extends AppCompatActivity {
     public static Boolean mLocationPermissionGranted;
     Button add_Schedule;
     Button view_Schedule;
+    Button todays_Schedule;
     private View.OnClickListener onClickListener = new View.OnClickListener() {
         @Override
         public void onClick(final View v) {
@@ -36,6 +38,10 @@ public class MainActivity extends AppCompatActivity {
                         startActivity(addLocationIntent);
                         break;
                     case R.id.viewSchedule:
+                        Intent intent1 = new Intent(MainActivity.this, TaskListActivity.class);
+                        startActivity(intent1);
+                        break;
+                    case R.id.todaysSchedule:
                         Intent viewScheduleIntent = new Intent(MainActivity.this, ScheduledLocations.class);
                         startActivity(viewScheduleIntent);
                         break;
@@ -54,8 +60,10 @@ public class MainActivity extends AppCompatActivity {
         getLocationPermission();
         add_Schedule = (Button) findViewById(R.id.addLocation);
         view_Schedule = (Button) findViewById(R.id.viewSchedule);
+        todays_Schedule = (Button) findViewById(R.id.todaysSchedule);
         add_Schedule.setOnClickListener(onClickListener);
         view_Schedule.setOnClickListener(onClickListener);
+        todays_Schedule.setOnClickListener(onClickListener);
         int SDK_INT = android.os.Build.VERSION.SDK_INT;
         if (SDK_INT > 8) {
             StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()

@@ -30,10 +30,11 @@ public class CommonFunctions {
         String response = "";
 
         try {
-            URL url = new URL("http://maps.googleapis.com/maps/api/directions/json?origin="
-                    + lat1 + "," + lon1 + "&destination=" + lat2 + "," + lon2 + "&sensor=false&units=metric&mode=driving");
+            URL url = new URL("https://maps.googleapis.com/maps/api/directions/json?origin="
+                    + lat1 + "," + lon1 + "&destination=" + lat2 + "," + lon2 + "&sensor=false&units=metric&mode=driving&key=AIzaSyCJxPHicXv_QtFy5cFJLVSlJizqIdSMedQ");
             final HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("POST");
+            Log.i("Maps", url.toString());
             InputStream in = new BufferedInputStream(conn.getInputStream());
             byte[] contents = new byte[1024];
 
@@ -44,6 +45,22 @@ public class CommonFunctions {
             Log.i(CommonFunctions.class.getName(), "response " + response);
             JSONObject jsonObject = new JSONObject(response);
             JSONArray array = jsonObject.getJSONArray("routes");
+            if (array.length() > 0) {
+                Log.i("Maps", "found data so parsing it ");
+            } else {
+                if (jsonObject.has("error_message")) {
+                    Log.i("Maps", jsonObject.getString("error_message"));
+                }
+                if (jsonObject.has("status")) {
+                    if (jsonObject.getString("status").equals("OVER_QUERY_LIMIT")) {
+                        Thread.sleep(2000);
+                    } else if (jsonObject.getString("status").equals("ZERO_RESULTS")) {
+                        Log.i("Maps", "No route found");
+                        return 0.0;
+                    }
+                }
+            }
+
             JSONObject routes = array.getJSONObject(0);
             JSONArray legs = routes.getJSONArray("legs");
             JSONObject steps = legs.getJSONObject(0);

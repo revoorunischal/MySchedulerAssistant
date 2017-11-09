@@ -11,32 +11,41 @@
     tools:context="com.myschedulerassistant.MainActivity">
 
     <TextView
-        android:text="Welcome to your Most interactive and helpful scheduler. Save the location time for us to remind you and give you the bes route."
+        android:id="@+id/textView2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_marginTop="29dp"
-        android:id="@+id/textView2"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="29dp"
+        android:text="@string/welcome_message"
         android:textAppearance="@style/TextAppearance.AppCompat.Display1"
         />
 
     <Button
-        android:text="Click here to check your schedule"
+        android:id="@+id/viewSchedule"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="25dp"
-        android:id="@+id/viewSchedule"
         android:layout_below="@+id/addLocation"
-        android:layout_centerHorizontal="true" />
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="25dp"
+        android:text="Click here to check your schedule" />
 
     <Button
-        android:text="Click here to add a location "
+        android:id="@+id/addLocation"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="31dp"
-        android:id="@+id/addLocation"
         android:layout_below="@+id/textView2"
-        android:layout_centerHorizontal="true" />
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="31dp"
+        android:text="Click here to add a task " />
+
+    <Button
+        android:id="@+id/todaysSchedule"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/viewSchedule"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="25dp"
+        android:text="Click here to view todays shedule on map " />
 </RelativeLayout>

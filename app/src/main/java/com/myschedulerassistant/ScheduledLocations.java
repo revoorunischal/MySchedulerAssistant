@@ -33,8 +33,9 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 
 import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Created by nischal on 10/7/2017.
@@ -66,23 +67,23 @@ public class ScheduledLocations extends AppCompatActivity
                         progressDialog = new ProgressDialog(ScheduledLocations.this);
                         progressDialog.setMessage("Fetching");
                         progressDialog.show();
-                        Double[] distances = new Double[displayedLocs.length()];
-                        try {
-                            for (int i = 0; i < displayedLocs.length(); i++) {
-                                JSONObject json_fetched = displayedLocs.getJSONObject(i);
-                                Double distance = null;
-                                while (distance == null) {
-                                    distance = CommonFunctions.getDistance((Double) json_fetched.get(MainActivity.PLACE_LATITUDE),
-                                            (Double) json_fetched.get(MainActivity.PLACE_LONGITUDE), mCurrLocationMarker.getPosition().latitude,
-                                            mCurrLocationMarker.getPosition().longitude, mMap);
-                                }
-                                Toast.makeText(getApplicationContext(), "distance to " + json_fetched.getString(MainActivity.PLACE_NAME) + " is " + distance
-                                        , Toast.LENGTH_SHORT).show();
-                                distances[i] = distance;
+                        Double[] distances = new Double[scheduled_locations.length];
+                        Marker prev_location = mCurrLocationMarker;
+                        for (int i = 0; i < scheduled_locations.length; i++) {
+                            Marker cur_loc = scheduled_locations[i];
+                            Double distance = null;
+                            while (distance == null) {
+                                distance = CommonFunctions.getDistance(cur_loc.getPosition().latitude,
+                                        cur_loc.getPosition().latitude, prev_location.getPosition().latitude,
+                                        prev_location.getPosition().longitude, mMap);
+
                             }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
+                            prev_location = cur_loc;
+                            Toast.makeText(getApplicationContext(), "distance " + distance, Toast.LENGTH_SHORT).show();
+                            distances[i] = distance;
                         }
+                        Toast.makeText(getApplicationContext(), "displayed all locations", Toast.LENGTH_SHORT).show();
+
                         progressDialog.hide();
                         pageLoaded = true;
                     }
@@ -156,7 +157,30 @@ public class ScheduledLocations extends AppCompatActivity
                 == PackageManager.PERMISSION_GRANTED) {
             LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
         }
-        sharedpreferences = getSharedPreferences(MainActivity.MyPREFERENCES,
+
+        DBHelper dbHelper = DBHelper.getInstance(ScheduledLocations.this);
+        dbHelper.open();
+        List<Task> taskList = dbHelper.getTodaysTasks();
+        if (taskList.size() > 0) {
+            int i = 0;
+            Iterator<Task> itr = taskList.iterator();
+            scheduled_locations = new Marker[taskList.size()];
+            while (itr.hasNext()) {
+                Task currentTask = itr.next();
+                Log.i("maps", currentTask.toString());
+                LatLng latLng = new LatLng(currentTask.getlatitude(), currentTask.getlongitude());
+                MarkerOptions markerOptions = new MarkerOptions();
+                markerOptions.position(latLng);
+                markerOptions.title(currentTask.getTaskName() + " on " + currentTask.formatDate());
+                markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW));
+                scheduled_locations[i++] = mMap.addMarker(markerOptions);
+            }
+            pageLoaded = true;
+        } else {
+            Toast.makeText(getApplicationContext(), "No schedules for today. Please Add a schedule " +
+                    "and come here to check the aggregated view", Toast.LENGTH_LONG).show();
+        }
+        /*sharedpreferences = getSharedPreferences(MainActivity.MyPREFERENCES,
                 Context.MODE_PRIVATE);
         String jsonArrStr = sharedpreferences.getString(MainActivity.SCHEDULER_ARRAY, null);
         try {
@@ -183,7 +207,7 @@ public class ScheduledLocations extends AppCompatActivity
         } catch (JSONException e) {
             e.printStackTrace();
         }
-
+        */
     }
 
     @Override
