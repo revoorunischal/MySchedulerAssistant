@@ -74,7 +74,7 @@ public class ScheduledLocations extends AppCompatActivity
                             Double distance = null;
                             while (distance == null) {
                                 distance = CommonFunctions.getDistance(cur_loc.getPosition().latitude,
-                                        cur_loc.getPosition().latitude, prev_location.getPosition().latitude,
+                                        cur_loc.getPosition().longitude, prev_location.getPosition().latitude,
                                         prev_location.getPosition().longitude, mMap);
 
                             }
