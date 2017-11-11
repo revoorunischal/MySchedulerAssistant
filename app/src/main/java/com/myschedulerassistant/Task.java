@@ -14,19 +14,20 @@ public class Task {
     private Date mDateTime;
     private Double mlatitude;
     private Double mlongitude;
-
+    private Double mduration;
     public Task() {
         //mId = UUID.randomUUID();
         //mDateTime = new Date();
     }
 
-    public Task(long id, String taskName, String taskPlace, Date dateTime, Double latitude, Double longitude) {
+    public Task(long id, String taskName, String taskPlace, Date dateTime, Double latitude, Double longitude, Double duration) {
         mId = id;
         mTaskName = taskName;
         mTaskPlace = taskPlace;
         mDateTime = dateTime;
         mlatitude = latitude;
         mlongitude = longitude;
+        mduration = duration;
     }
 
     public long getId() {
@@ -63,7 +64,7 @@ public class Task {
     }
 
     public String formatDate() {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh-mm a");
+        SimpleDateFormat sdf = new SimpleDateFormat("MM-dd-yyyy hh-mm a");
         return sdf.format(mDateTime).toString();
     }
 
@@ -83,6 +84,14 @@ public class Task {
         mlongitude = longitude;
     }
 
+    public Double getDuration() {
+        return mduration;
+    }
+
+    public void setDuration(Double duration) {
+        mduration = duration;
+    }
+
     @Override
     public String toString() {
         return "Task{" +
@@ -92,6 +101,7 @@ public class Task {
                 ", mDateTime=" + mDateTime +
                 ", mlatitude=" + mlatitude +
                 ", mlongitude=" + mlongitude +
+                ", mduration=" + mduration +
                 '}';
     }
 }

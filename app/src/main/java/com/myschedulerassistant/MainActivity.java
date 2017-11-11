@@ -11,18 +11,13 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import java.text.SimpleDateFormat;
+
 public class MainActivity extends AppCompatActivity {
 
     public static final String MyPREFERENCES = "MyPrefs";
-    public static final String SCHEDULER_ARRAY = "array";
-    //JSON Object strings
-    public static final String PLACE = "place";
-    public static final String PLACE_NAME = "place_name";
-    public static final String PLACE_ADDRESS = "place_address";
-    public static final String PLACE_LATITUDE = "place_lat";
-    public static final String PLACE_LONGITUDE = "place_lon";
-    public static final String PURPOSE = "purpose";
-    public static final String DATE_AND_TIME = "dat";
+
+    public static final SimpleDateFormat sdf = new SimpleDateFormat("MM-dd-yyyy hh:mm a");
     private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 10;
     public static Boolean mLocationPermissionGranted;
     Button add_Schedule;

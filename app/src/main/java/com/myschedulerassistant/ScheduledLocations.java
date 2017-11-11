@@ -1,7 +1,6 @@
 package com.myschedulerassistant;
 
 import android.Manifest;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -13,7 +12,6 @@ import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
@@ -31,9 +29,11 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
+import com.myschedulerassistant.MappperIconLib.IconGenerator;
 
 import org.json.JSONArray;
 
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
@@ -54,52 +54,12 @@ public class ScheduledLocations extends AppCompatActivity
     private Location mLastLocation;
     private Marker mCurrLocationMarker;
     private Marker[] scheduled_locations;
-    private View.OnClickListener onClickListener = new View.OnClickListener() {
-        @Override
-        public void onClick(final View v) {
-            switch (v.getId()) {
-                case R.id.fetchFastestRoute:
-                    if (!pageLoaded || mCurrLocationMarker == null) {
-                        Log.i(ScheduledLocations.class.getName(), "Page no loaded yet");
-                    } else {
-                        pageLoaded = false;
-                        ProgressDialog progressDialog;
-                        progressDialog = new ProgressDialog(ScheduledLocations.this);
-                        progressDialog.setMessage("Fetching");
-                        progressDialog.show();
-                        Double[] distances = new Double[scheduled_locations.length];
-                        Marker prev_location = mCurrLocationMarker;
-                        for (int i = 0; i < scheduled_locations.length; i++) {
-                            Marker cur_loc = scheduled_locations[i];
-                            Double distance = null;
-                            while (distance == null) {
-                                distance = CommonFunctions.getDistance(cur_loc.getPosition().latitude,
-                                        cur_loc.getPosition().longitude, prev_location.getPosition().latitude,
-                                        prev_location.getPosition().longitude, mMap);
-
-                            }
-                            prev_location = cur_loc;
-                            Toast.makeText(getApplicationContext(), "distance " + distance, Toast.LENGTH_SHORT).show();
-                            distances[i] = distance;
-                        }
-                        Toast.makeText(getApplicationContext(), "displayed all locations", Toast.LENGTH_SHORT).show();
-
-                        progressDialog.hide();
-                        pageLoaded = true;
-                    }
-                    break;
-            }
-        }
-    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         // Retrieve the content view that renders the map.
         setContentView(R.layout.scheduled_locations);
-        fetchfastestRoute = (Button) findViewById(R.id.fetchFastestRoute);
-        fetchfastestRoute.setOnClickListener(onClickListener);
-
         displayedLocs = new JSONArray();
         // Build the map.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -157,10 +117,10 @@ public class ScheduledLocations extends AppCompatActivity
                 == PackageManager.PERMISSION_GRANTED) {
             LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
         }
-
+        Date todayDate = new Date();
         DBHelper dbHelper = DBHelper.getInstance(ScheduledLocations.this);
         dbHelper.open();
-        List<Task> taskList = dbHelper.getTodaysTasks();
+        List<Task> taskList = dbHelper.getTasksOnDate(todayDate);
         if (taskList.size() > 0) {
             int i = 0;
             Iterator<Task> itr = taskList.iterator();
@@ -169,45 +129,23 @@ public class ScheduledLocations extends AppCompatActivity
                 Task currentTask = itr.next();
                 Log.i("maps", currentTask.toString());
                 LatLng latLng = new LatLng(currentTask.getlatitude(), currentTask.getlongitude());
+
                 MarkerOptions markerOptions = new MarkerOptions();
                 markerOptions.position(latLng);
                 markerOptions.title(currentTask.getTaskName() + " on " + currentTask.formatDate());
-                markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW));
+                IconGenerator iconFactory = new IconGenerator(this);
+                markerOptions.icon(BitmapDescriptorFactory.fromBitmap(iconFactory.makeIcon(String.valueOf(i + 1))));
                 scheduled_locations[i++] = mMap.addMarker(markerOptions);
             }
             pageLoaded = true;
+            if (mCurrLocationMarker != null) {
+                displayRoutes();
+            }
         } else {
             Toast.makeText(getApplicationContext(), "No schedules for today. Please Add a schedule " +
                     "and come here to check the aggregated view", Toast.LENGTH_LONG).show();
         }
-        /*sharedpreferences = getSharedPreferences(MainActivity.MyPREFERENCES,
-                Context.MODE_PRIVATE);
-        String jsonArrStr = sharedpreferences.getString(MainActivity.SCHEDULER_ARRAY, null);
-        try {
-            if (jsonArrStr != null) {
-                JSONArray jsonArray = null;
-                jsonArray = new JSONArray(jsonArrStr);
-                scheduled_locations = new Marker[jsonArray.length()];
-                for (int i = 0; i < jsonArray.length(); i++) {
-                    JSONObject json_fetched = jsonArray.getJSONObject(i);
-                    LatLng latLng = new LatLng((Double) json_fetched.get(MainActivity.PLACE_LATITUDE),
-                            (Double) json_fetched.get(MainActivity.PLACE_LONGITUDE));
-                    MarkerOptions markerOptions = new MarkerOptions();
-                    markerOptions.position(latLng);
-                    markerOptions.title(json_fetched.getString(MainActivity.PURPOSE) + " on " + json_fetched.getString(MainActivity.DATE_AND_TIME));
-                    markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW));
-                    scheduled_locations[i] = mMap.addMarker(markerOptions);
-                    displayedLocs.put(json_fetched);  //TODO all the later caluclations are donw only on these
-                }
-                pageLoaded = true;
-            } else {
-                Toast.makeText(getApplicationContext(), "No schedules added. Please Add a schedule " +
-                        "and come here to check the aggregated view", Toast.LENGTH_LONG).show();
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        */
+        dbHelper.close();
     }
 
     @Override
@@ -232,16 +170,39 @@ public class ScheduledLocations extends AppCompatActivity
         MarkerOptions markerOptions = new MarkerOptions();
         markerOptions.position(latLng);
         markerOptions.title("Current Position");
-        markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA));
+        IconGenerator iconFactory = new IconGenerator(this);
+        markerOptions.icon(BitmapDescriptorFactory.fromBitmap(iconFactory.makeIcon("0")));
+
+
         mCurrLocationMarker = mMap.addMarker(markerOptions);
+
         //move map camera
         mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
         mMap.animateCamera(CameraUpdateFactory.zoomTo(10));
+        if (pageLoaded) {
+            displayRoutes();
+        }
         //stop location updates
         if (mGoogleApiClient != null) {
             LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
         }
     }
 
-
+    public void displayRoutes() {
+        Double[] distances = new Double[scheduled_locations.length];
+        Marker prev_location = mCurrLocationMarker;
+        for (int i = 0; i < scheduled_locations.length; i++) {
+            Marker cur_loc = scheduled_locations[i];
+            Double distanceAndDuration[] = null;
+            while (distanceAndDuration == null) {
+                distanceAndDuration = CommonFunctions.getDistanceAndDuration(cur_loc.getPosition().latitude,
+                        cur_loc.getPosition().longitude, prev_location.getPosition().latitude,
+                        prev_location.getPosition().longitude, mMap);
+            }
+            prev_location = cur_loc;
+            Toast.makeText(getApplicationContext(), "distance " + distanceAndDuration[0] + " Time " + distanceAndDuration[1], Toast.LENGTH_SHORT).show();
+            distances[i] = distanceAndDuration[0];
+        }
+        Toast.makeText(getApplicationContext(), "displayed all locations", Toast.LENGTH_SHORT).show();
+    }
 }

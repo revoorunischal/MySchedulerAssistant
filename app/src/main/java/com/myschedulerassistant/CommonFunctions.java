@@ -1,6 +1,10 @@
 package com.myschedulerassistant;
 
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.graphics.Color;
+import android.os.Build;
 import android.util.Log;
 
 import com.google.android.gms.maps.GoogleMap;
@@ -24,11 +28,11 @@ import java.util.List;
 
 public class CommonFunctions {
 
-    public static Double getDistance(final double lat1, final double lon1, final double lat2, final double lon2, GoogleMap mMap) {
+    public static Double[] getDistanceAndDuration(final double lat1, final double lon1, final double lat2, final double lon2, GoogleMap mMap) {
         Double parsedDistance = null;
         Double durationInMins = null;
         String response = "";
-
+        Double[] distanceAndDurationAnd = new Double[2];
         try {
             URL url = new URL("https://maps.googleapis.com/maps/api/directions/json?origin="
                     + lat1 + "," + lon1 + "&destination=" + lat2 + "," + lon2 + "&sensor=false&units=metric&mode=driving&key=AIzaSyCJxPHicXv_QtFy5cFJLVSlJizqIdSMedQ");
@@ -56,7 +60,9 @@ public class CommonFunctions {
                         Thread.sleep(2000);
                     } else if (jsonObject.getString("status").equals("ZERO_RESULTS")) {
                         Log.i("Maps", "No route found");
-                        return 0.0;
+                        distanceAndDurationAnd[0] = 0.0;
+                        distanceAndDurationAnd[1] = 0.0;
+                        return distanceAndDurationAnd;
                     }
                 }
             }
@@ -72,8 +78,9 @@ public class CommonFunctions {
             JSONObject duration = steps.getJSONObject("duration");
             durationInMins = Double.parseDouble(duration.getString("value")) / 60;
             Log.i(CommonFunctions.class.getName(), "parsed duration in mins " + durationInMins);
-
-            if (parsedDistance != null) {
+            distanceAndDurationAnd[0] = parsedDistance;
+            distanceAndDurationAnd[1] = durationInMins;
+            if (parsedDistance != null && mMap != null) {
                 JSONObject overviewPolyline = routes.getJSONObject("overview_polyline");
                 String polyline = overviewPolyline.getString("points");
 
@@ -91,8 +98,9 @@ public class CommonFunctions {
             }
         } catch (Exception e) {
             e.printStackTrace();
+            return null;
         }
-        return parsedDistance;
+        return distanceAndDurationAnd;
     }
 
     public static List<LatLng> decodePoly(String encoded) {
@@ -126,6 +134,25 @@ public class CommonFunctions {
         }
 
         return poly;
+    }
+
+    public static void showAlertMsg(String title, String message, Context context) {
+        AlertDialog.Builder builder;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            builder = new AlertDialog.Builder(context, android.R.style.Theme_Material_Dialog_Alert);
+        } else {
+            builder = new AlertDialog.Builder(context);
+        }
+        builder.setTitle(title)
+                .setMessage(message)
+                .setCancelable(false)
+                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        // continue with delete
+                    }
+                })
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .show();
     }
 
 }

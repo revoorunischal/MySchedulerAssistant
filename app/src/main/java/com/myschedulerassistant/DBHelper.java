@@ -41,23 +41,19 @@ public class DBHelper extends SQLiteOpenHelper {
         database = getWritableDatabase();
     }
 
-    public void close() {
-        close();
-    }
 
-
-    public Task createTask(String taskName, Date taskDate, String placeName, Double latitude, Double longitude) {
+    public Task createTask(String taskName, Date taskDate, String placeName, Double latitude, Double longitude, Double duration) {
         ContentValues values = new ContentValues();
         values.put("taskName", taskName);
         values.put("taskDate", taskDate.getTime());
         values.put("taskPlace", placeName);
         values.put("latitude", latitude);
         values.put("longitude", longitude);
-
+        values.put("duration", duration);
         long insertId = database.insert("TASKS", null, values);
 
         if (insertId != -1) {
-            return new Task(insertId, taskName, placeName, taskDate, latitude, longitude);
+            return new Task(insertId, taskName, placeName, taskDate, latitude, longitude, duration);
         }
 
         Log.e(TAG, "Error inserting data!");
@@ -68,7 +64,7 @@ public class DBHelper extends SQLiteOpenHelper {
     public List<Task> getAllTasks() {
         List<Task> tasks = new ArrayList<Task>();
 
-        Cursor cursor = database.rawQuery("select * from tasks", null);
+        Cursor cursor = database.rawQuery("select * from tasks order by taskDate ASC", null);
         cursor.moveToFirst();
         while (!cursor.isAfterLast()) {
             Task task = new Task();
@@ -78,6 +74,7 @@ public class DBHelper extends SQLiteOpenHelper {
             task.setTaskPlace(cursor.getString(3));
             task.setlatitude(cursor.getDouble(4));
             task.setlongitude(cursor.getDouble(5));
+            task.setDuration(cursor.getDouble(6));
             tasks.add(task);
             cursor.moveToNext();
         }
@@ -85,16 +82,15 @@ public class DBHelper extends SQLiteOpenHelper {
         return tasks;
     }
 
-    public List<Task> getTodaysTasks() {
+    public List<Task> getTasksOnDate(Date date) {
         List<Task> tasks = new ArrayList<Task>();
-        Date date = new Date();
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(date);
         calendar.set(Calendar.HOUR, 0);
         calendar.set(Calendar.MINUTE, 0);
         calendar.set(Calendar.SECOND, 0);
         date = calendar.getTime();
-        long startDate = date.getTime();
+        long startDate = calendar.getTime().getTime();
         calendar.set(Calendar.HOUR, 23);
         calendar.set(Calendar.MINUTE, 59);
         calendar.set(Calendar.SECOND, 59);
@@ -111,6 +107,7 @@ public class DBHelper extends SQLiteOpenHelper {
             task.setTaskPlace(cursor.getString(3));
             task.setlatitude(cursor.getDouble(4));
             task.setlongitude(cursor.getDouble(5));
+            task.setDuration(cursor.getDouble(6));
             tasks.add(task);
             cursor.moveToNext();
         }
@@ -136,7 +133,8 @@ public class DBHelper extends SQLiteOpenHelper {
                 "taskDate LONG NOT NULL, " +
                 "taskPlace TEXT NOT NULL, " +
                 "latitude REAL NOT NULL, " +
-                "longitude REAL NOT NULL " +
+                "longitude REAL NOT NULL, " +
+                "duration REAL NOT NULL " +
                 ");");
     }
 

@@ -1,5 +1,6 @@
 package com.myschedulerassistant;
 
+import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.content.Context;
@@ -7,10 +8,9 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
@@ -23,22 +23,19 @@ import com.google.android.gms.common.GooglePlayServicesRepairableException;
 import com.google.android.gms.location.places.Place;
 import com.google.android.gms.location.places.ui.PlacePicker;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.regex.Pattern;
-
+import java.util.List;
 
 
 public class AddLocation extends AppCompatActivity {
     private static final int PLACE_PICKER_REQUEST = 1;
     SharedPreferences sharedpreferences;
-    Place selectedPlace;
+    Place selectedPlace = null;
     private EditText dateTime;
     private EditText placeSelected;
+    private EditText duration;
     private EditText purpose;
     private Button selectDate;
     private Button selectPlace;
@@ -46,108 +43,149 @@ public class AddLocation extends AppCompatActivity {
     private LinearLayout addScheduleLayout;
     //Add the task details as objects
     private Task currentTask;
-    private Date selectedDate;
+    private Date selectedDate = null;
     private String taskName, taskPlace;
-    private Double latitude, longitude;
-            private View.OnClickListener onClickListener = new View.OnClickListener() {
-                @Override
-                public void onClick(final View v) {
-                        switch (v.getId()) {
-                            case R.id.selectDate:
-                                final String date_Time = dateTime.getText().toString();
-                                final int mYear;
-                                final int mMonth;
-                                final int mDay;
-                                final int mHour;
-                                final int mMinute;
-                                if(date_Time == null || date_Time.equals("")){
-                                    Calendar c = Calendar.getInstance();
-                                    mYear = c.get(Calendar.YEAR);
-                                    mMonth = c.get(Calendar.MONTH);
-                                    mDay = c.get(Calendar.DAY_OF_MONTH);
-                                    mHour = c.get(Calendar.HOUR_OF_DAY);
-                                    mMinute = c.get(Calendar.MINUTE);
-                                }else{
-                                    Log.i("Date time","date fetched "+date_Time);
-                                    String[] date_time_arr  = date_Time.split(Pattern.quote(" "));
-                                    String date             = date_time_arr[0];
-                                    String time             = date_time_arr[1];
-                                    Log.i("Date time","date parsed "+date);
-                                    Log.i("Date time","time parsed "+time);
-                                    String[] date_array     = date.split("-");
-                                    mDay                    = Integer.valueOf(date_array[0]);
-                                    mMonth                  = Integer.valueOf(date_array[1])-1;
-                                    mYear                   = Integer.valueOf(date_array[2]);
-                                    String[] time_array     = time.split(Pattern.quote(":"));
-                                    mHour                   = Integer.valueOf(time_array[0]);
-                                    mMinute                 = Integer.valueOf(time_array[1]);
-                                    Log.i("Date time","values day "+mDay+" month "+mMonth+" mYear "+mYear+" hour "+mHour+" minutes "+mMinute);
-                                }
-                                DatePickerDialog datePickerDialog = new DatePickerDialog(v.getContext(),
-                                        new DatePickerDialog.OnDateSetListener() {
-                                            @Override
-                                            public void onDateSet(DatePicker view, final int year,
-                                                                  final int monthOfYear, final int dayOfMonth) {
-                                                TimePickerDialog timePickerDialog = new TimePickerDialog(v.getContext(),
-                                                        new TimePickerDialog.OnTimeSetListener() {
+    private Double latitude, longitude, taskDuration;
+    private View.OnClickListener onClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(final View v) {
+            hideKeyboard(v);
+            switch (v.getId()) {
+                case R.id.selectDate:
+                    final String date_Time = dateTime.getText().toString();
+                    final int mYear;
+                    final int mMonth;
+                    final int mDay;
+                    final int mHour;
+                    final int mMinute;
+                    if (selectedDate == null) {
+                        Calendar c = Calendar.getInstance();
+                        mYear = c.get(Calendar.YEAR);
+                        mMonth = c.get(Calendar.MONTH);
+                        mDay = c.get(Calendar.DAY_OF_MONTH);
+                        mHour = c.get(Calendar.HOUR_OF_DAY);
+                        mMinute = c.get(Calendar.MINUTE);
+                        selectedDate = c.getTime();
+                    } else {
+                        Calendar c = Calendar.getInstance();
+                        c.setTime(selectedDate);
+                        mYear = c.get(Calendar.YEAR);
+                        mMonth = c.get(Calendar.MONTH);
+                        mDay = c.get(Calendar.DAY_OF_MONTH);
+                        mHour = c.get(Calendar.HOUR_OF_DAY);
+                        mMinute = c.get(Calendar.MINUTE);
 
-                                                            @Override
-                                                            public void onTimeSet(TimePicker view, int hourOfDay,
-                                                                                  int minute) {
-
-                                                                dateTime.setText(dayOfMonth+"-"+(monthOfYear+1)+"-"+year+" "
-                                                                +hourOfDay+":"+minute);
-                                                                selectedDate = new Date(year - 1900, monthOfYear, dayOfMonth, hourOfDay, minute);
-                                                            }
-                                                        }, mHour, mMinute, false);
-                                                timePickerDialog.show();
-                                            }
-                                        }, mYear, mMonth, mDay);
-                                datePickerDialog.show();
-
-                                break;
-                            case R.id.AddSchedule:
-                                /*currentTask= new Task();
-                                currentTask.setTaskName(taskName);
-                                currentTask.setDateTime(selectedDate);
-                                currentTask.setTaskPlace(taskPlace);
-                                ScheduleList.get(getApplication()).addTask(currentTask);*/
-                                DBHelper dbHelper = DBHelper.getInstance(AddLocation.this);
-                                dbHelper.open();
-                                currentTask = dbHelper.createTask(taskName, selectedDate, taskPlace, latitude, longitude);
-                                try {
-                                    JSONObject json = new JSONObject();
-                                    json.put(MainActivity.PLACE, selectedPlace);
-                                    json.put(MainActivity.PLACE_NAME, selectedPlace.getName());
-                                    json.put(MainActivity.PLACE_ADDRESS, selectedPlace.getAddress());
-                                    json.put(MainActivity.PLACE_LATITUDE, selectedPlace.getLatLng().latitude);
-                                    json.put(MainActivity.PLACE_LONGITUDE, selectedPlace.getLatLng().longitude);
-                                    json.put(MainActivity.PURPOSE, purpose.getText().toString());
-                                    json.put(MainActivity.DATE_AND_TIME, dateTime.getText().toString());
-                                    SharedPreferences.Editor editor = sharedpreferences.edit();
-                                    sharedpreferences = getSharedPreferences(MainActivity.MyPREFERENCES,
-                                            Context.MODE_PRIVATE);
-                                    String jsonArrStr = sharedpreferences.getString(MainActivity.SCHEDULER_ARRAY, null);
-                                    if (jsonArrStr != null) {
-                                        JSONArray jsonArray = new JSONArray(jsonArrStr);
-                                        jsonArray.put(json);
-                                        editor.putString(MainActivity.SCHEDULER_ARRAY, jsonArray.toString());
-                                    } else {
-                                        JSONArray jsonArray = new JSONArray();
-                                        jsonArray.put(json);
-                                        editor.putString(MainActivity.SCHEDULER_ARRAY, jsonArray.toString());
-                                    }
-                                    editor.commit();
-                                    Toast.makeText(getApplicationContext(), "Schedule Added", Toast.LENGTH_LONG).show();
-                                    finish();
-                                } catch (JSONException e) {
-                                    e.printStackTrace();
-                                }
-                                break;
-                        }
                     }
+                    DatePickerDialog datePickerDialog = new DatePickerDialog(v.getContext(),
+                            new DatePickerDialog.OnDateSetListener() {
+                                @Override
+                                public void onDateSet(DatePicker view, final int year,
+                                                      final int monthOfYear, final int dayOfMonth) {
+                                    TimePickerDialog timePickerDialog = new TimePickerDialog(v.getContext(),
+                                            new TimePickerDialog.OnTimeSetListener() {
 
-            };
+                                                @Override
+                                                public void onTimeSet(TimePicker view, int hourOfDay,
+                                                                      int minute) {
+                                                    String date = (monthOfYear + 1) + "-" + dayOfMonth + "-" + year + " " + hourOfDay + ":" + minute;
+                                                    try {
+                                                        SimpleDateFormat TimePickersdf = new SimpleDateFormat("MM-dd-yyyy HH:mm");
+                                                        selectedDate = TimePickersdf.parse(date);
+                                                        dateTime.setText(MainActivity.sdf.format(selectedDate));
+                                                    } catch (Exception e) {
+                                                        e.printStackTrace();
+                                                        //Worst case scenario Handling
+                                                        dateTime.setText(dayOfMonth + "-" + (monthOfYear + 1) + "-" + year + " "
+                                                                +hourOfDay+":"+minute);
+                                                        selectedDate = new Date(year - 1900, monthOfYear, dayOfMonth, hourOfDay, minute);
+                                                    }
+
+                                                }
+                                            }, mHour, mMinute, false);
+                                    timePickerDialog.show();
+                                }
+                            }, mYear, mMonth, mDay);
+                    datePickerDialog.show();
+
+                    break;
+                case R.id.AddSchedule:
+                    if (selectedPlace == null) {
+                        CommonFunctions.showAlertMsg("Data Missing", "Please select a place", AddLocation.this);
+                        break;
+                    }
+                    taskPlace = selectedPlace.getName().toString();
+                    latitude = selectedPlace.getLatLng().latitude;
+                    longitude = selectedPlace.getLatLng().longitude;
+                    taskName = purpose.getText().toString();
+
+                    if (taskName == null || taskName.trim().isEmpty()) {
+                        CommonFunctions.showAlertMsg("Data Missing", "Task Name Mandatory ", AddLocation.this);
+                        break;
+                    }
+                    String durationVal = duration.getText().toString();
+                    if (taskName == null || taskName.trim().isEmpty()) {
+                        CommonFunctions.showAlertMsg("Data Missing", "Duration is mandatory", AddLocation.this);
+                        break;
+                    }
+                    taskDuration = Double.valueOf(durationVal);
+
+                    DBHelper dbHelper = DBHelper.getInstance(AddLocation.this);
+                    dbHelper.open();
+                    currentTask = dbHelper.createTask(taskName, selectedDate, taskPlace, latitude, longitude, taskDuration);
+                    if (currentTask != null) {
+                        List<Task> tasksOnThisdate = dbHelper.getTasksOnDate(selectedDate);
+                        if (tasksOnThisdate.size() > 1) {
+                            int i;
+                            for (i = 0; i < tasksOnThisdate.size(); i++) {
+                                if (tasksOnThisdate.get(i).getId() == currentTask.getId()) {
+                                    break;
+                                }
+                            }
+                            if (i == 0 || tasksOnThisdate.size() == 2) {
+                                Log.i("Add Location", "first if clause");
+                                if (checkIfTaskCannotBeAdded(tasksOnThisdate.get(0), tasksOnThisdate.get(1), dbHelper)) {
+                                    break;
+                                }
+                                Log.i("Add Location ", "Allowed to add");
+                            } else if (i == tasksOnThisdate.size() - 1) {
+                                Log.i("Add Location", "second if clause");
+                                if (checkIfTaskCannotBeAdded(tasksOnThisdate.get(i - 1), tasksOnThisdate.get(i), dbHelper)) {
+                                    break;
+                                }
+                                Log.i("Add Location ", "Allowed to add");
+                            } else {
+                                Log.i("Add Location", "else");
+                                Log.i("Add Location", "first route");
+                                if (checkIfTaskCannotBeAdded(tasksOnThisdate.get(i - 1), tasksOnThisdate.get(i), dbHelper)) {
+                                    break;
+                                }
+                                Log.i("Add Location ", "Allowed to add");
+                                Log.i("Add Location", "first route");
+                                if (checkIfTaskCannotBeAdded(tasksOnThisdate.get(i), tasksOnThisdate.get(i + 1), dbHelper)) {
+                                    break;
+                                }
+                                Log.i("Add Location", "second route");
+                            }
+                        } else if (tasksOnThisdate.size() == 1) {
+                            Log.i("Add Location", "only one task for today so adding directly");
+                        } else {
+                            //Should not reach this
+                            Log.e("Add Location", "failed to add the location retry");
+                            CommonFunctions.showAlertMsg("Failed", "Failed to add the record please try again", AddLocation.this);
+                            break;
+                        }
+                    } else {
+                        CommonFunctions.showAlertMsg("Failed", "Failed to add the record please try again", AddLocation.this);
+                        break;
+                    }
+                    Toast.makeText(AddLocation.this, "Schedule Added", Toast.LENGTH_LONG).show();
+
+                    finish();
+                    break;
+            }
+        }
+
+    };
 
     //to setup the map object
     @Override
@@ -161,24 +199,14 @@ public class AddLocation extends AppCompatActivity {
         placeSelected = (EditText) findViewById(R.id.selected_place);
         selectPlace = (Button) findViewById(R.id.selectPlace);
         purpose = (EditText) findViewById(R.id.purpose);
-        purpose.addTextChangedListener(new TextWatcher() {
+        duration = (EditText) findViewById(R.id.duration);
+        //to hide keyboard
+        purpose.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
-            public void beforeTextChanged(
-                    CharSequence s, int start, int count, int after) {
-// This space intentionally left blank
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int
-                    before, int count) {
-                //currentTask.setTaskName(s.toString());
-
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-// This one too
-                taskName = s.toString();
+            public void onFocusChange(View v, boolean hasFocus) {
+                if (!hasFocus) {
+                    hideKeyboard(v);
+                }
             }
         });
         addTask = (Button) findViewById(R.id.AddSchedule);
@@ -203,18 +231,20 @@ public class AddLocation extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == PLACE_PICKER_REQUEST) {
             if (resultCode == RESULT_OK) {
-                Place place = PlacePicker.getPlace(this.getApplicationContext(), data);
+                Place place = PlacePicker.getPlace(this.getBaseContext(), data);
                 selectedPlace = place;
                 //String toastMsg = String.format("Place selected : %s", place.getName());
                 //Toast.makeText(this, toastMsg, Toast.LENGTH_LONG).show();
                 placeSelected.setText(place.getName());
-                taskPlace = place.getName().toString();
-                latitude = place.getLatLng().latitude;
-                longitude = place.getLatLng().longitude;
                 addScheduleLayout.setVisibility(View.VISIBLE);
 
             }
         }
+    }
+
+    public void hideKeyboard(View view) {
+        InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
+        inputMethodManager.hideSoftInputFromWindow(view.getWindowToken(), 0);
     }
 
     @Override
@@ -224,4 +254,30 @@ public class AddLocation extends AppCompatActivity {
         super.onResume();
     }
 
+    public boolean checkIfTaskCannotBeAdded(Task startTask, Task endTask, DBHelper dbHelper) {
+
+        Double[] distAndDuration = null;
+        while (distAndDuration == null) {
+            distAndDuration = CommonFunctions.getDistanceAndDuration(startTask.getlatitude(),
+                    startTask.getlongitude(), endTask.getlatitude(),
+                    endTask.getlongitude(), null);
+        }
+        Log.i("Add Location", "duration of travel " + distAndDuration[1] + " duration of task " + startTask.getDuration());
+        Double timeToTravel = distAndDuration[1] + (startTask.getDuration() * 60.0);
+        Log.i("Add Location", "time to travel " + timeToTravel);
+        long diffInTaskSchedule = endTask.getDateTime().getTime() - startTask.getDateTime().getTime();
+
+        Log.i("Add Location", "diffInSchedule time milliseconds " + diffInTaskSchedule);
+        diffInTaskSchedule = (diffInTaskSchedule / 1000) / 60;
+        Log.i("Add Location", "diffInSchedule time minutes " + diffInTaskSchedule);
+        timeToTravel = timeToTravel - (timeToTravel * 0.05);
+        Log.i("Add Location", "time to travel with error threshold " + timeToTravel);
+        if (timeToTravel > diffInTaskSchedule) {
+            CommonFunctions.showAlertMsg("Conflict", "This Task is conflicting with another task and " +
+                    " you might fall short of time covering both so try to prepone or postpone the task", AddLocation.this);
+            dbHelper.deleteTask(currentTask.getId());
+            return true;
+        }
+        return false;
+    }
 }
