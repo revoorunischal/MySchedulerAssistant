@@ -115,6 +115,26 @@ public class DBHelper extends SQLiteOpenHelper {
         return tasks;
     }
 
+    public List<Task> getTasksOnTimeRange(long startTime, long endTime) {
+        List<Task> tasks = new ArrayList<Task>();
+        Cursor cursor = database.rawQuery("select * from tasks where taskDate >='" + startTime + "' and taskDate<='" + endTime + "' order by taskDate ASC", null);
+        Log.i("DB", "select * from tasks where taskDate >='" + startTime + "' and taskDate<=" + endTime + "' order by taskDate ASC");
+        cursor.moveToFirst();
+        while (!cursor.isAfterLast()) {
+            Task task = new Task();
+            task.setId(cursor.getLong(0));
+            task.setTaskName(cursor.getString(1));
+            task.setDateTime(new Date((cursor.getLong(2))));
+            task.setTaskPlace(cursor.getString(3));
+            task.setlatitude(cursor.getDouble(4));
+            task.setlongitude(cursor.getDouble(5));
+            task.setDuration(cursor.getDouble(6));
+            tasks.add(task);
+            cursor.moveToNext();
+        }
+        cursor.close();
+        return tasks;
+    }
 
     public void deleteTask(long id) {
         database.execSQL("delete from TASKS where id = \"" + id + "\"");
@@ -123,6 +143,24 @@ public class DBHelper extends SQLiteOpenHelper {
     public Task getSelectedTask(int position) {
         List<Task> tasks = getAllTasks();
         return tasks.get(position);
+    }
+
+    public Task getTaskById(long id) {
+        Task task = new Task();
+        Cursor cursor = database.rawQuery("select * from tasks where id = \"" + id + "\"", null);
+        cursor.moveToFirst();
+        while (!cursor.isAfterLast()) {
+            task.setId(cursor.getLong(0));
+            task.setTaskName(cursor.getString(1));
+            task.setDateTime(new Date((cursor.getLong(2))));
+            task.setTaskPlace(cursor.getString(3));
+            task.setlatitude(cursor.getDouble(4));
+            task.setlongitude(cursor.getDouble(5));
+            task.setDuration(cursor.getDouble(6));
+            cursor.moveToNext();
+        }
+        cursor.close();
+        return task;
     }
 
     @Override

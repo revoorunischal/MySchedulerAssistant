@@ -17,6 +17,7 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -28,6 +29,7 @@ public class TaskListActivity extends AppCompatActivity {
     private List<String> listDataHeader;
     private HashMap<String, List<String>> listDataChild;
     private int position;
+    private int buttonValue;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,19 +38,8 @@ public class TaskListActivity extends AppCompatActivity {
         dbHelper = DBHelper.getInstance(this);
         dbHelper.open();
         expListView = (ExpandableListView) findViewById(R.id.lvExp);
-        /*listDataHeader = new ArrayList<>();
-        listDataChild = new HashMap<>();
-        List<Task> taskList = dbHelper.getAllTasks();
-                //ScheduleList.get(getApplication()).getTasks();
-        for(Task eachTask: taskList) {
-            listDataHeader.add(eachTask.getTaskName());
-            List<String> taskDetails = new ArrayList<>();
-            taskDetails.add("Date and Time: "+eachTask.formatDate());
-            taskDetails.add("Place: "+eachTask.getTaskPlace());
-            listDataChild.put(eachTask.getTaskName(),taskDetails);
-        }
-        listAdapter = new ExpandableListAdapter(this, listDataHeader, listDataChild);
-        expListView.setAdapter(listAdapter);*/
+        Intent i = getIntent();
+        buttonValue = i.getIntExtra("TASKS", 0);
         updateTask();
     }
 
@@ -82,13 +73,19 @@ public class TaskListActivity extends AppCompatActivity {
     private void updateTask() {
         listDataHeader = new ArrayList<>();
         listDataChild = new HashMap<>();
-        List<Task> taskList = dbHelper.getAllTasks();
+        List<Task> taskList;
+        if (buttonValue == 1) {
+            taskList = dbHelper.getAllTasks();
+        } else {
+            taskList = dbHelper.getTasksOnDate(new Date());
+        }
         //ScheduleList.get(getApplication()).getTasks();
         for (Task eachTask : taskList) {
             listDataHeader.add(eachTask.getTaskName());
             List<String> taskDetails = new ArrayList<>();
             taskDetails.add("Date and Time: " + eachTask.formatDate());
             taskDetails.add("Place: " + eachTask.getTaskPlace());
+            taskDetails.add("Task duration: " + eachTask.getDuration());
             listDataChild.put(eachTask.getTaskName(), taskDetails);
         }
         listAdapter = new ExpandableListAdapter(this, listDataHeader, listDataChild);

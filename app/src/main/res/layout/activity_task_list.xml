@@ -8,6 +8,8 @@
     <ExpandableListView
         android:id="@+id/lvExp"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:background="#FFFFFF"
+        android:childDivider="#00000000" />
 
 </LinearLayout>

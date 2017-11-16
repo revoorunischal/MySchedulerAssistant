@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="55dip"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    tools:background="#05BBF5">
 
     <TextView
         android:id="@+id/lblListItem"
@@ -11,6 +13,8 @@
         android:paddingBottom="5dp"
         android:paddingLeft="?android:attr/expandableListPreferredChildPaddingLeft"
         android:paddingTop="5dp"
-        android:textSize="17dip" />
+        android:textColor="@color/common_google_signin_btn_text_dark_focused"
+        android:textSize="17dip"
+        tools:background="#05BBF5" />
 
 </LinearLayout>

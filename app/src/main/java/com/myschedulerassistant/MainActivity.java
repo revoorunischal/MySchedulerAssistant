@@ -1,5 +1,6 @@
 package com.myschedulerassistant;
 
+import android.app.AlarmManager;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
@@ -23,6 +24,8 @@ public class MainActivity extends AppCompatActivity {
     Button add_Schedule;
     Button view_Schedule;
     Button todays_Schedule;
+    private AlarmManager manager;
+    private DBHelper mDBHelper;
     private View.OnClickListener onClickListener = new View.OnClickListener() {
         @Override
         public void onClick(final View v) {
@@ -34,6 +37,7 @@ public class MainActivity extends AppCompatActivity {
                         break;
                     case R.id.viewSchedule:
                         Intent intent1 = new Intent(MainActivity.this, TaskListActivity.class);
+                        intent1.putExtra("TASKS", 1);
                         startActivity(intent1);
                         break;
                     case R.id.todaysSchedule:
@@ -64,9 +68,19 @@ public class MainActivity extends AppCompatActivity {
             StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
                     .permitAll().build();
             StrictMode.setThreadPolicy(policy);
-            //your codes here
-
         }
+        //Set a pendingIntent
+        /*PendingIntent pendingIntent;
+        Intent alarmIntent = new Intent(getApplicationContext(), AlarmReceiver.class);
+        pendingIntent = PendingIntent.getBroadcast(this, 0, alarmIntent, 0);
+        manager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        int interval = 300000;
+
+        manager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), interval, pendingIntent);
+        Toast.makeText(this, "Alarm Set", Toast.LENGTH_SHORT).show();*/
+
+        Intent intent = new Intent(getApplicationContext(), GoogleService.class);
+        MainActivity.this.startService(intent);
     }
 
     private void getLocationPermission() {

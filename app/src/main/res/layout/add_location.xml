@@ -22,7 +22,7 @@
         android:layout_marginTop="10dp"
         android:layout_weight="0.08"
         android:padding="30px"
-        android:text="Add the following selected place to your scheduler along with time and purpose"
+        android:text="Select a place and enter time ,purpose and Duration and add to your schdeuler"
         android:textAlignment="center" />
     <!--  Name Label -->
     <LinearLayout
@@ -86,7 +86,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Choose a date and time"
+            android:text="Enter the duration of task in hours."
             android:textAlignment="center" />
 
         <Button
